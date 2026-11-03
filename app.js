@@ -52,6 +52,12 @@ function parseBody(body) {
   return { text, chunks: chunks.length ? chunks : null, endTag };
 }
 
+const CJK_RANGE = '\\p{Script=Han}\\p{Script=Hiragana}\\p{Script=Katakana}\\p{Script=Hangul}';
+const CJK_CHAR = new RegExp(`[${CJK_RANGE}]`, 'u');
+const CJK_ALL = new RegExp(`[${CJK_RANGE}]`, 'gu');
+// One token per CJK character; other runs (Latin words, numbers) stay whole. Spaces ride along.
+const CJK_TOKENS = new RegExp(`\\s*(?:[${CJK_RANGE}]|[^\\s${CJK_RANGE}]+)\\s*`, 'gu');
+
 function parseLRC(src) {
   let offset = 0;
   const raw = [];
@@ -92,12 +98,24 @@ function parseLRC(src) {
     }
 
     const chars = L.text.replace(/\s+/g, '').length;
-    const est = 0.4 + chars * 0.075;
     const span = next - L.start;
-    const dur = span < est * 1.8 ? Math.max(0.3, span - 0.15) : est * 1.25;
+    let dur, parts, weights;
+    if (CJK_CHAR.test(L.text)) {
+      // Chinese, Japanese and Korean are sung roughly one character per beat, far slower
+      // than English syllables, and a line usually fills most of the time until the next
+      // one. So each character gets its own wipe, spread over nearly the whole gap.
+      const cjk = (L.text.match(CJK_ALL) || []).length;
+      const longest = 0.5 + cjk * 0.62 + (chars - cjk) * 0.12;
+      dur = Math.max(0.3, Math.min(span - 0.25, longest));
+      parts = L.text.match(CJK_TOKENS) || [L.text];
+      weights = parts.map((w) => (CJK_CHAR.test(w) ? 1 : w.trim().length * 0.35 + 0.3));
+    } else {
+      const est = 0.4 + chars * 0.075;
+      dur = span < est * 1.8 ? Math.max(0.3, span - 0.15) : est * 1.25;
+      parts = L.text.split(/(?<=\s)(?=\S)/);
+      weights = parts.map((w) => w.trim().length + 1);
+    }
     L.end = L.start + dur;
-    const parts = L.text.split(/(?<=\s)(?=\S)/);
-    const weights = parts.map((w) => w.trim().length + 1);
     const total = weights.reduce((a, b) => a + b, 0);
     let t = L.start;
     L.words = parts.map((w, j) => {
