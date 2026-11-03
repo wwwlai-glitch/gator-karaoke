@@ -1394,7 +1394,7 @@ function stageIdle() {
   return d > 0 && !media.playing() && media.time() >= d - 1;
 }
 function cancelAuto() {
-  if (!autoCountdown) return;
+  if (!autoCountdown || autoCountdown.busy) return;
   clearInterval(autoCountdown.timer);
   autoCountdown = null;
   setWarn('');
@@ -1414,6 +1414,7 @@ async function playWhenReady() {
 }
 setInterval(() => {
   if (autoCountdown) {
+    if (autoCountdown.busy) return;
     // Someone pressed play, seeked back or emptied the queue: stop counting down.
     if (!queue.length || !stageIdle() || !autoToggle.checked) cancelAuto();
     return;
@@ -1426,8 +1427,15 @@ setInterval(() => {
   autoCountdown = { timer: setInterval(async () => {
     left -= 1;
     if (left > 0) { show(); return; }
-    cancelAuto();
-    await nextSinger();
-    playWhenReady();
+    // Hold the lock while the next song loads, so it is not skipped by a second countdown.
+    clearInterval(autoCountdown.timer);
+    autoCountdown.busy = true;
+    setWarn('');
+    try {
+      await nextSinger();
+      await playWhenReady();
+    } finally {
+      autoCountdown = null;
+    }
   }, 1000) };
 }, 500);
