@@ -1403,6 +1403,7 @@ async function playWhenReady() {
   // The video and backing track are found and cued in the background, and cueing
   // can stop a play that started too early, so keep at it until playback holds.
   const track = state.track;
+  if (!track) return;
   let held = 0;
   for (let i = 0; i < 90 && state.track === track; i++) {
     await new Promise((r) => setTimeout(r, 500));
