@@ -1173,6 +1173,20 @@ function saveQueue() {
   if (typeof PartyHost !== 'undefined') PartyHost.broadcast(PartyHost.snapshot(queue, nowPlaying));
 }
 
+// LRCLIB sometimes sheds load for a moment; a queued song should not be lost to that.
+async function fetchLrclibById(id) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const res = await fetch(`${API}/get/${id}`);
+      if (res.ok) return res.json();
+      if (attempt >= 3 || !(res.status === 429 || res.status >= 500)) throw new Error(`LRCLIB returned ${res.status}`);
+    } catch (e) {
+      if (attempt >= 3) throw e;
+    }
+    await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+  }
+}
+
 async function nextSinger() {
   const q = queue.shift();
   saveQueue();
@@ -1186,10 +1200,7 @@ async function nextSinger() {
     let track = q.song;
     // LRCLIB lyrics are fetched again rather than kept in storage.
     if (!track || track.source === 'lrclib') {
-      track = fromLrclib(await fetch(`${API}/get/${track ? track.id : q.trackId}`).then((res) => {
-        if (!res.ok) throw new Error(`LRCLIB returned ${res.status}`);
-        return res.json();
-      }));
+      track = fromLrclib(await fetchLrclibById(track ? track.id : q.trackId));
     }
     media.own = false;
     loadTrack(track, null, { prefer });
