@@ -1389,11 +1389,16 @@ function cancelAuto() {
   setWarn('');
 }
 async function playWhenReady() {
-  // The video and backing track are found in the background; start once one is cued.
-  for (let i = 0; i < 60; i++) {
+  // The video and backing track are found and cued in the background, and cueing
+  // can stop a play that started too early, so keep at it until playback holds.
+  const track = state.track;
+  let held = 0;
+  for (let i = 0; i < 90 && state.track === track; i++) {
     await new Promise((r) => setTimeout(r, 500));
-    if (media.playing()) return;
-    if (!mediaState.searching && media.kind === 'yt' && ytVideoId) media.play();
+    if (mediaState.searching || mediaState.track !== track || media.kind !== 'yt' || !ytVideoId) continue;
+    if (media.playing()) { if (++held >= 4) return; continue; }
+    held = 0;
+    media.play();
   }
 }
 setInterval(() => {
