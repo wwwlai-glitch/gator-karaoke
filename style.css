@@ -355,21 +355,20 @@ input[type=text]:focus, input[type=search]:focus { border-color: var(--blue-2); 
 /* A dimmed black band keeps the lyrics readable and covers subtitles burned into the video. */
 .stage.two-line .lyrics {
   top: auto; bottom: 0; transition: none; transform: none !important;
-  padding: .45em 6% .8em; background: rgba(0, 0, 0, .62);
+  padding: .45em 6% .8em; background: rgba(0, 0, 0, .72);
 }
 .stage.two-line .lyrics:empty { background: none; padding: 0; }
 .stage.two-line .line { display: none; }
 .stage.two-line .line.focus, .stage.two-line .line.next {
   display: block; opacity: 1; transform: none; padding: .12em 0;
   font-size: calc(var(--lyric-size) * .9);
-  filter: drop-shadow(0 2px 0 rgba(0,0,0,.85)) drop-shadow(0 0 6px rgba(0,0,0,.6));
+  /* Crisp solid text on the dark band: no outline or blur. */
+  filter: none;
 }
-.stage.two-line .line .w { -webkit-text-stroke: .025em #000; paint-order: stroke fill; }
-.stage.two-line .line.focus .w { --unlit: #fff; }
+.stage.two-line .line .w { -webkit-text-stroke: 0; --unlit: #fff; --lit: #ffa53d; }
 .stage.two-line .line.next { font-size: calc(var(--lyric-size) * .72); }
 .stage.two-line .line.next .w { --unlit: #fff; --p: 0; }
-.stage.two-line .line.next { opacity: .85; }
-.stage.two-line .line.gap.focus .w { -webkit-text-stroke: 0; }
+.stage.two-line .line.gap.focus .w { color: #fff; }
 
 .welcome { position: absolute; inset: 0; display: grid; place-content: center; padding: 24px 10%; text-align: left; }
 .welcome-big { font-family: Bungee, "Noto Sans TC", "Microsoft JhengHei", Rubik, sans-serif; font-size: clamp(1.4rem, 3vw, 2.4rem); color: var(--text); margin-bottom: 18px; }
