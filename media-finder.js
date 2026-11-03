@@ -17,7 +17,10 @@ const MediaFinder = (() => {
   const norm = (s) => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
     .replace(/&/g, ' and ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
   const words = (s) => norm(s).split(' ').filter(Boolean);
-  const has = (hay, needle) => !!needle && ` ${hay} `.includes(` ${needle} `);
+  // Chinese, Japanese and Korean titles are not split by spaces, so CJK words match as substrings.
+  const CJK = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Bopomofo}]/u;
+  const has = (hay, needle) => !!needle && (CJK.test(needle) ? String(hay || '').includes(needle)
+    : ` ${hay} `.includes(` ${needle} `));
   const dropThe = (s) => s.replace(/^the /, '');
 
   // "Song (feat. X) - 2011 Remaster" → "Song"
@@ -29,7 +32,9 @@ const MediaFinder = (() => {
   }
 
   function youtubeSearchURL(track, instrumental = false) {
-    const q = [track.artistName, baseTitle(track.trackName), instrumental ? 'instrumental' : ''].filter(Boolean).join(' ');
+    const song = baseTitle(track.trackName);
+    const suffix = instrumental ? (CJK.test(`${track.artistName} ${song}`) ? '伴奏' : 'instrumental') : '';
+    const q = [track.artistName, song, suffix].filter(Boolean).join(' ');
     return `https://www.youtube.com/results?${new URLSearchParams({ search_query: q })}`;
   }
 
@@ -48,10 +53,15 @@ const MediaFinder = (() => {
   // unless the song title itself contains them.
   const ALTERED = ['cover', 'reaction', 'live', 'remix', 'slowed', 'sped', 'nightcore', '8d', 'tutorial', 'lesson',
     'reverb', 'bass boosted', 'hour', 'hours', 'loop', 'mashup', 'parody', 'acoustic', 'teaser', 'trailer', 'snippet',
-    'shorts', 'fan made', 'fanmade', 'ai', 'zumba', 'dance', 'choreography', 'workout', 'fitness', 'tiktok', 'extended'];
-  const INSTRUMENTAL = ['instrumental', 'karaoke', 'backing track', 'minus one', 'off vocal', 'no vocals', 'without vocals'];
+    'shorts', 'fan made', 'fanmade', 'ai', 'zumba', 'dance', 'choreography', 'workout', 'fitness', 'tiktok', 'extended',
+    '翻唱', '抖音', '加速', '降速', '慢速', '教學', '教学', '舞蹈', '混音'];
+  const INSTRUMENTAL = ['instrumental', 'karaoke', 'backing track', 'minus one', 'off vocal', 'no vocals', 'without vocals',
+    'ktv', '伴奏', '伴唱', '卡拉ok', '消音', '去人聲', '去人声', '純音樂', '纯音乐', '無人聲', '无人声'];
+  // Titles that mark a sing-along (karaoke) track rather than a plain instrumental.
+  const KARAOKE = ['karaoke', 'ktv', '卡拉ok', '伴唱'];
   const NOT_BACKING = ['piano', 'guitar', 'violin', 'cello', 'sax', 'saxophone', 'drum', 'drums', 'ukulele', 'orchestra',
-    'acapella', 'a cappella', 'vocals only', 'isolated vocals', 'lofi', 'lo fi', 'music box', 'chill'];
+    'acapella', 'a cappella', 'vocals only', 'isolated vocals', 'lofi', 'lo fi', 'music box', 'chill',
+    '鋼琴', '钢琴', '吉他', '小提琴', '古箏', '古筝', '二胡', '八音盒', '清唱', '純人聲', '纯人声'];
 
   const anyWord = (title, list, song) => list.some((w) => has(title, w) && !has(song, w));
   // Re-recordings such as "(Taylor's Version)" are a different performance.
@@ -67,7 +77,7 @@ const MediaFinder = (() => {
     const artistAuthor = artistMatches(String(video.author || '').replace(/\s*-\s*Topic$/i, '').replace(/\s*VEVO$/i, '').replace(/VEVO$/i, ''), track.artistName);
     return {
       title, song, author, topic,
-      titleOk: need.length > 0 && need.every((w) => titleWords.has(w)),
+      titleOk: need.length > 0 && need.every((w) => titleWords.has(w) || (CJK.test(w) && title.includes(w))),
       artistOk: artistParts(track.artistName).some((a) => has(dropThe(title), a) || has(title, a)) || artistAuthor,
       // "Official" in a title is easy to fake, so only the uploader counts.
       official: topic || artistAuthor || /vevo$/.test(author.replace(/ /g, '')),
@@ -112,9 +122,9 @@ const MediaFinder = (() => {
       const d = describe(v, track);
       if (!d.titleOk || !d.artistOk || !anyWord(d.title, INSTRUMENTAL, d.song)) return;
       if (anyWord(d.title, ALTERED.filter((w) => w !== 'cover'), d.song) || anyWord(d.title, NOT_BACKING, d.song) || reRecording(d.title, d.song)) return;
-      if (has(d.title, 'cover') && !has(d.title, 'karaoke')) return;
+      const karaoke = KARAOKE.some((w) => has(d.title, w));
+      if (has(d.title, 'cover') && !karaoke) return;
       if (d.diff != null && d.diff > 25) return;
-      const karaoke = has(d.title, 'karaoke');
       const kind = karaoke ? 'Karaoke track' : 'Instrumental';
       const score = (d.diff == null ? 4 : Math.min(d.diff, 25)) * 1.5
         + (has(d.title, 'official instrumental') || d.official ? -1 : 0)
@@ -256,17 +266,19 @@ const MediaFinder = (() => {
   async function find(track, { signal } = {}) {
     const artist = artistParts(track.artistName).length ? track.artistName : '';
     const q = `${artist} ${baseTitle(track.trackName)}`.trim();
-    const [wd, main, audio, inst] = await Promise.allSettled([
+    const [wd, main, audio, inst, instZh] = await Promise.allSettled([
       wikidataVideos(track, { signal }),
       youtubeSearch(q, { signal }),
       youtubeSearch(`${q} official audio`, { signal }),
       youtubeSearch(`${q} instrumental`, { signal }),
+      // Chinese uploads label backing tracks 伴奏 rather than "instrumental".
+      CJK.test(q) ? youtubeSearch(`${q} 伴奏`, { signal }) : Promise.resolve([]),
     ]);
     if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
     const value = (r) => (r.status === 'fulfilled' ? r.value : []);
     const wikidata = value(wd);
     const searches = [value(main), value(audio)].flat();
-    const instList = value(inst);
+    const instList = [...value(inst), ...value(instZh)];
     const ranked = rankVideos(track, [...searches, ...instList.filter((v) => wikidata.includes(v.id))], wikidata);
     // Always offer the official music video, even when its length differs.
     const videos = ranked.slice(0, 5);
