@@ -27,7 +27,7 @@ body {
     radial-gradient(900px 600px at -10% 110%, rgba(47, 123, 255, .25), transparent 60%),
     var(--bg);
   color: var(--text);
-  font-family: Rubik, system-ui, sans-serif;
+  font-family: Rubik, "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
   min-height: 100vh;
 }
 button, input { font: inherit; color: inherit; }
@@ -60,7 +60,7 @@ kbd {
 .g-mic-head { fill: #cfdcf5; stroke: #8ea6d4; stroke-width: 1.5; }
 .g-note { fill: var(--orange-2); }
 h1 {
-  font-family: Bungee, Rubik, sans-serif; font-weight: 400;
+  font-family: Bungee, "Noto Sans TC", "Microsoft JhengHei", Rubik, sans-serif; font-weight: 400;
   font-size: clamp(1.3rem, 3vw, 2rem); margin: 0; letter-spacing: .02em;
   color: var(--orange);
   text-shadow: 3px 3px 0 #0b2a6e, 4px 4px 0 rgba(0,0,0,.35);
@@ -270,7 +270,7 @@ input[type=text]:focus, input[type=search]:focus { border-color: var(--blue-2); 
 .yt-wrap.off { width: 1px; height: 1px; opacity: 0; pointer-events: none; left: 0; top: 0; }
 
 .stage-head { position: relative; z-index: 2; display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; padding: 20px 24px 0; }
-.track-title { font-family: Bungee, Rubik, sans-serif; font-size: clamp(1.1rem, 2.2vw, 1.6rem); color: var(--orange); line-height: 1.15; }
+.track-title { font-family: Bungee, "Noto Sans TC", "Microsoft JhengHei", Rubik, sans-serif; font-size: clamp(1.1rem, 2.2vw, 1.6rem); color: var(--orange); line-height: 1.15; }
 .track-artist { color: var(--blue-soft); margin-top: 4px; font-weight: 500; }
 .timing-source {
   margin-top: 8px; padding: 8px 10px; border-radius: 10px; font-size: .82rem; line-height: 1.4;
@@ -330,7 +330,7 @@ input[type=text]:focus, input[type=search]:focus { border-color: var(--blue-2); 
 .countdown i.out { opacity: .15; transform: scale(.6); box-shadow: none; }
 
 .welcome { position: absolute; inset: 0; display: grid; place-content: center; padding: 24px 10%; text-align: left; }
-.welcome-big { font-family: Bungee, Rubik, sans-serif; font-size: clamp(1.4rem, 3vw, 2.4rem); color: var(--text); margin-bottom: 18px; }
+.welcome-big { font-family: Bungee, "Noto Sans TC", "Microsoft JhengHei", Rubik, sans-serif; font-size: clamp(1.4rem, 3vw, 2.4rem); color: var(--text); margin-bottom: 18px; }
 .welcome ol { margin: 0; padding-left: 1.3em; color: var(--blue-soft); line-height: 1.7; font-size: 1.05rem; max-width: 640px; }
 .welcome li::marker { color: var(--orange); font-weight: 900; }
 

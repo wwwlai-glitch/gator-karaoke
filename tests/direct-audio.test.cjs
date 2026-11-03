@@ -40,7 +40,7 @@ test('preparation errors leave embedded playback available and can be retried',a
 });
 test('a playback error restores the embed without an endless automatic retry',async()=>{
   const {v,fire,calls}=setup(); await v.update('abcdefghijk'); fire('error');
-  assert.equal(v.active,false); assert.equal(v.requested,'abcdefghijk'); assert.match(v.error,/could not play/);
+  assert.equal(v.active,false); assert.equal(v.requested,'abcdefghijk'); assert.match(v.error,/無法播放/);
   assert.deepEqual(calls.at(-1),[42,true,true]);
 });
 test('unexpected remote audio URLs are rejected',async()=>{

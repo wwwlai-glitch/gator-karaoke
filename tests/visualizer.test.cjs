@@ -48,12 +48,12 @@ test('Firefox never opens a screen picker and direct audio connects without capt
   const h = setup(async () => { pickerCalls++; return stream(); }, 'Mozilla/5.0 Firefox/145.0');
   await h.v.capture();
   assert.equal(pickerCalls, 0);
-  assert.match(h.v.status.textContent, /Firefox cannot capture/);
+  assert.match(h.v.status.textContent, /Firefox 無法擷取/);
   h.kind('direct'); h.v.sourceChanged();
   assert.equal(h.created(), 1);
   assert.equal(h.connected.size, 1);
   assert.equal(h.v.shareButton.hidden, true);
-  assert.match(h.v.status.textContent, /No screen sharing needed/);
+  assert.match(h.v.status.textContent, /不需要分享螢幕/);
 });
 
 test('shared audio is analyzed without a second speaker connection and every track stops', async () => {
@@ -89,7 +89,7 @@ test('a screen or window selected in a browser ignoring picker hints is released
     await v.capture();
     assert.equal(connected.size, 0);
     assert.ok(s.tracks.every((track) => track.stops === 1));
-    assert.match(v.status.textContent, /Choose a browser tab/);
+    assert.match(v.status.textContent, /請選擇一個瀏覽器分頁/);
   }
 });
 
@@ -97,7 +97,7 @@ test('sharing without an audio track gives guidance and releases the video track
   const s = stream(false);
   const { v } = setup(async () => s);
   await v.capture();
-  assert.match(v.status.textContent, /No audio was shared/);
+  assert.match(v.status.textContent, /沒有分享到音訊/);
   assert.equal(s.tracks[0].stops, 1);
 });
 
@@ -128,7 +128,7 @@ test('capture is cleaned up if audio initialization fails', async () => {
   v.context.resume = async () => { throw new Error('audio unavailable'); };
   await v.capture();
   assert.ok(s.tracks.every((t) => t.stops === 1));
-  assert.match(v.status.textContent, /Could not share audio/);
+  assert.match(v.status.textContent, /無法分享音訊/);
 });
 
 test('fullscreen resizes the output canvas and renderer together without cropping', () => {

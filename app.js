@@ -164,7 +164,7 @@ function playerTime(p) {
 
 const media = {
   kind: 'clock',
-  name: 'Stage clock',
+  name: '舞台計時器',
   clock: { base: 0, startedAt: null },
 
   time() {
@@ -236,7 +236,7 @@ const stageVisualizer = new StageVisualizer({
 function renderSource() {
   let label = media.name;
   if (media.kind === 'yt' && instOn && mediaState.inst) {
-    label = `Instrumental · ${mediaState.inst.title}${ytVideoId ? ' (video muted)' : ''}`;
+    label = `伴奏 · ${mediaState.inst.title}${ytVideoId ? '（MV 靜音）' : ''}`;
   }
   if (directAudio.active) label += ' · direct audio';
   $('#sourceName').textContent = label;
@@ -366,13 +366,13 @@ async function loadYouTube(id, { searchLyrics = true } = {}) {
           onError: (e) => {
             ytBlockedId = ytVideoId;
             if (directAudio.available && ytMode === 'viz') {
-              setWarn('The music video is unavailable. Direct song audio can still play with the visualizer.');
+              setWarn('這支 MV 無法播放，但仍可搭配視覺特效播放歌曲音訊。');
               return;
             }
             const blocked = e.data === 101 || e.data === 150;
             // An automatically chosen video falls through to the next candidate.
             if (!media.own && mediaState.video && mediaState.video.id === ytVideoId) { nextVideo(ytVideoId); return; }
-            setWarn(blocked ? 'This video doesn’t allow embedding. Try a different upload (e.g. the “Topic” or lyric-video version).' : 'YouTube couldn’t play that video.');
+            setWarn(blocked ? '這支影片不允許嵌入播放，請換一個版本（例如「Topic」官方音訊或歌詞影片）。' : 'YouTube 無法播放這支影片。');
           },
         },
       });
@@ -522,7 +522,7 @@ async function runSearch(q, { quiet = false } = {}) {
   if (searchCtl) searchCtl.abort();
   const ctl = searchCtl = new AbortController();
   status.className = 'status';
-  status.textContent = 'Searching the swamp…';
+  status.textContent = '搜尋中…';
   const [lrc, word] = await Promise.allSettled([
     searchLrclib(q, ctl.signal),
     WordTiming.search(q, { signal: ctl.signal }),
@@ -530,21 +530,21 @@ async function runSearch(q, { quiet = false } = {}) {
   if (searchCtl !== ctl) return [];
   if (lrc.status === 'rejected' && word.status === 'rejected') {
     status.className = 'status err';
-    status.textContent = `Couldn’t reach the lyrics databases (${lrc.reason && lrc.reason.message}).`;
+    status.textContent = `無法連上歌詞資料庫（${lrc.reason && lrc.reason.message}）。`;
     return [];
   }
   const list = mergeResults(lrc.status === 'fulfilled' ? lrc.value : [], word.status === 'fulfilled' ? word.value : []);
   state.results = list;
   state.searchNotes = { word: word.status === 'rejected', lrclib: lrc.status === 'rejected' };
   renderResults();
-  if (!quiet) status.textContent = list.length ? '' : 'No matches. Try just the song title, or the artist + title.';
+  if (!quiet) status.textContent = list.length ? '' : '找不到符合的歌。試試只輸入歌名，或輸入「歌手＋歌名」。';
   return list;
 }
 
 const RESULT_GROUPS = [
-  { timing: 'word', cls: 'word', label: 'Word-by-word', sub: 'every word lights up on time' },
-  { timing: 'line', cls: 'sync', label: 'Line-by-line', sub: 'word fill is estimated' },
-  { timing: 'plain', cls: '', label: 'No timing', sub: 'read along' },
+  { timing: 'word', cls: 'word', label: '逐字', sub: '每個字準時亮起' },
+  { timing: 'line', cls: 'sync', label: '逐行', sub: '逐字變色為估算' },
+  { timing: 'plain', cls: '', label: '無時間軸', sub: '僅顯示歌詞' },
 ];
 
 function renderResults() {
@@ -563,14 +563,14 @@ function renderResults() {
     return section;
   }).filter(Boolean);
   if (state.searchNotes && state.searchNotes.word && state.results.length) {
-    groups.unshift(el('p', 'hint', 'Word-by-word results couldn’t be loaded right now, so only LRCLIB results are shown.'));
+    groups.unshift(el('p', 'hint', '目前無法載入逐字歌詞，只顯示 LRCLIB 的結果。'));
   }
   if (state.searchNotes && state.searchNotes.lrclib && state.results.length) {
-    groups.push(el('p', 'hint', 'LRCLIB didn’t respond, so line-by-line results are missing.'));
+    groups.push(el('p', 'hint', 'LRCLIB 沒有回應，因此沒有逐行歌詞結果。'));
   }
   box.replaceChildren(...groups);
   if (state.results.length && !list.length) {
-    $('#searchStatus').textContent = 'Only unsynced lyrics found. Untick “Synced lyrics only” to read along without timing.';
+    $('#searchStatus').textContent = '只找到沒有時間軸的歌詞。取消勾選「只顯示同步歌詞」就能看歌詞。';
   }
 }
 
@@ -582,8 +582,8 @@ function resultItem(r) {
   const title = el('span', 'r-title', r.trackName);
   const meta = el('span', 'r-meta', [r.artistName, r.albumName].filter(Boolean).join(' · '));
   const side = el('span', 'r-side');
-  const badge = r.timing === 'word' ? el('span', 'badge word', 'word')
-    : r.timing === 'line' ? el('span', 'badge sync', 'line') : el('span', 'badge plain', 'plain');
+  const badge = r.timing === 'word' ? el('span', 'badge word', '逐字')
+    : r.timing === 'line' ? el('span', 'badge sync', '逐行') : el('span', 'badge plain', '純文字');
   side.append(badge, el('span', '', fmt(r.duration)));
   b.append(title, side, meta);
   b.addEventListener('click', () => loadTrack(r));
@@ -610,7 +610,7 @@ async function autoFind(q, duration, tags, isCurrent = () => true) {
   const synced = list.filter((r) => (r.timing ? r.timing !== 'plain' : r.syncedLyrics) && !r.instrumental);
   const status = $('#searchStatus');
   if (!synced.length) {
-    status.textContent = list.length ? 'Found the song but no synced lyrics. Pick one below to read along.' : 'No automatic match. Search for it yourself above.';
+    status.textContent = list.length ? '找到這首歌，但沒有同步歌詞。可以從下方選一個版本看歌詞。' : '沒有自動配對到歌詞，請在上方自行搜尋。';
     return;
   }
   const scored = synced.map((r, i) => ({ r, score: (duration ? Math.abs(r.duration - duration) : 0) + (r.timing === 'word' ? 0 : 2) + i * 0.4 }));
@@ -622,10 +622,10 @@ async function autoFind(q, duration, tags, isCurrent = () => true) {
       ? { trackName: tags.title, artistName: tags.artist }
       : null;
     loadTrack(best.r, identity, { auto: true });
-    status.textContent = `Auto-matched “${best.r.trackName}”. Wrong one? Pick another below.`;
+    status.textContent = `已自動配對「${best.r.trackName}」。不對的話，可以從下方換一個。`;
     return best.r;
   } else {
-    status.textContent = 'No result matched your audio’s length closely. Pick the best one below.';
+    status.textContent = '沒有長度接近你的音訊的結果，請從下方選一個最接近的。';
   }
 }
 
@@ -652,22 +652,22 @@ function loadTrack(r, identity = null, { auto = false, prefer = null } = {}) {
   const plain = $('#plain');
   const pending = r.source === 'wordtiming';
   plain.hidden = !!state.lines.length;
-  plain.textContent = state.lines.length ? '' : pending ? 'Loading lyrics…' : (r.plainLyrics || 'No lyrics text for this one.');
+  plain.textContent = state.lines.length ? '' : pending ? '歌詞載入中…' : (r.plainLyrics || '這首歌沒有歌詞文字。');
   renderLines();
   loadOffset();
   renderResults();
   checkDuration();
-  document.title = `${r.trackName} · Gator Karaoke Club`;
+  document.title = `${r.trackName} · 鱷魚 KTV`;
   const vocals = state.lines.filter((L) => !L.gap);
   if (pending) {
     loadWordTimedTrack(r, version);
   } else if (vocals.length && vocals.every((L) => L.wordSync)) {
-    setTimingStatus('On stage: word-by-word timing from LRCLIB', '', null, 'word');
+    setTimingStatus('目前使用：LRCLIB 逐字時間軸', '', null, 'word');
   } else if (auto) {
     // Matched automatically, so look for word timings of the same recording.
     startWordTiming(r, identity ? { ...r, ...identity } : r);
   } else {
-    setTimingStatus(vocals.length ? 'On stage: line-by-line timing from LRCLIB · word fill is estimated' : 'On stage: no timing for this one · read along');
+    setTimingStatus(vocals.length ? '目前使用：LRCLIB 逐行時間軸 · 逐字變色為估算' : '目前使用：這首歌沒有時間軸 · 僅顯示歌詞');
   }
   findMediaFor(r, { place: !auto && !(media.own && media.kind === 'clock'), prefer });
 }
@@ -675,12 +675,12 @@ function loadTrack(r, identity = null, { auto = false, prefer = null } = {}) {
 async function loadWordTimedTrack(track, version) {
   const ctl = wordTimingCtl = new AbortController();
   const retry = () => { if (state.track === track) loadWordTimedTrack(track, trackVersion); };
-  setTimingStatus('Loading word-by-word timing…', '', null, 'word');
+  setTimingStatus('逐字時間軸載入中…', '', null, 'word');
   try {
     const result = await WordTiming.load(track, { signal: ctl.signal });
     if (version !== trackVersion || wordTimingCtl !== ctl) return;
     showLines(result.lines);
-    setTimingStatus('On stage: word-by-word timing from ', result.source, null, 'word');
+    setTimingStatus('目前使用：逐字時間軸，來源 ', result.source, null, 'word');
   } catch (e) {
     if (ctl.signal.aborted || version !== trackVersion) return;
     // Fall back to LRCLIB's line timing for the same recording.
@@ -690,11 +690,11 @@ async function loadWordTimedTrack(track, version) {
     if (ctl.signal.aborted || version !== trackVersion) return;
     if (fallback && fallback.syncedLyrics) {
       showLines(parseLRC(fallback.syncedLyrics));
-      setTimingStatus('Word timing didn’t load, so this uses line-by-line timing from LRCLIB', '', retry);
+      setTimingStatus('逐字時間軸沒有載入成功，改用 LRCLIB 逐行時間軸', '', retry);
     } else {
       $('#plain').hidden = false;
-      $('#plain').textContent = (fallback && fallback.plainLyrics) || 'Couldn’t load these lyrics.';
-      setTimingStatus('Couldn’t load the word timing for this song', '', retry);
+      $('#plain').textContent = (fallback && fallback.plainLyrics) || '無法載入這份歌詞。';
+      setTimingStatus('無法載入這首歌的逐字時間軸', '', retry);
     }
   }
 }
@@ -719,7 +719,7 @@ function setTimingStatus(message, source = '', retry = null, tone = '') {
     status.append(a);
   }
   if (retry) {
-    const button = el('button', 'timing-retry', 'Retry word timing');
+    const button = el('button', 'timing-retry', '重新載入逐字時間軸');
     button.type = 'button';
     button.addEventListener('click', retry);
     status.append(document.createTextNode(' · '), button);
@@ -730,25 +730,25 @@ function startWordTiming(track, identity) {
   if (state.track !== track || track.source === 'wordtiming') return;
   if (wordTimingCtl) wordTimingCtl.abort();
   const ctl = wordTimingCtl = new AbortController();
-  setTimingStatus(state.lines.length ? 'On stage: line-by-line timing · looking for word timing…' : 'No timed lyrics');
+  setTimingStatus(state.lines.length ? '目前使用：逐行時間軸 · 正在尋找逐字時間軸…' : '沒有時間軸歌詞');
   upgradeWordTiming(track, ctl, identity);
 }
 
 async function upgradeWordTiming(track, ctl, identity) {
   const timeout = setTimeout(() => ctl.abort(), 22000);
-  const fallback = () => state.lines.length ? 'On stage: line-by-line timing · word fill is estimated' : 'No timed lyrics';
+  const fallback = () => state.lines.length ? '目前使用：逐行時間軸 · 逐字變色為估算' : '沒有時間軸歌詞';
   const retry = () => startWordTiming(track, identity);
   try {
     const result = await WordTiming.lookup(identity, { signal: ctl.signal });
     if (wordTimingCtl !== ctl || state.track !== track) return;
     if (!result) {
-      setTimingStatus(fallback() + ' · word timings unavailable for this version', '', retry);
+      setTimingStatus(fallback() + ' · 這個版本沒有逐字時間軸', '', retry);
       return;
     }
     showLines(result.lines);
-    setTimingStatus('On stage: word-by-word timing from ', result.source, null, 'word');
+    setTimingStatus('目前使用：逐字時間軸，來源 ', result.source, null, 'word');
   } catch {
-    if (wordTimingCtl === ctl && state.track === track) setTimingStatus(fallback() + ' · word timing service unavailable', '', retry);
+    if (wordTimingCtl === ctl && state.track === track) setTimingStatus(fallback() + ' · 逐字時間軸服務暫時無法使用', '', retry);
   } finally {
     clearTimeout(timeout);
   }
@@ -881,7 +881,7 @@ function setOffset(v) {
 function renderOffset() {
   const o = state.offset;
   $('#offVal').textContent = Math.abs(o) < 0.05 ? '±0.0s' : `${o > 0 ? '+' : '−'}${Math.abs(o).toFixed(1)}s`;
-  $('#offVal').title = o > 0 ? 'Lyrics are shown earlier' : o < 0 ? 'Lyrics are shown later' : 'No sync adjustment';
+  $('#offVal').title = o > 0 ? '歌詞提早顯示' : o < 0 ? '歌詞延後顯示' : '未調整時間';
 }
 function tapSync() {
   if (!state.lines.length) return;
@@ -908,7 +908,7 @@ function checkDuration() {
   if (!state.track || !d) { setWarn(''); return; }
   const diff = state.track.duration - d;
   if (Math.abs(diff) > 4) {
-    setWarn(`Heads up: these lyrics are ${Math.round(Math.abs(diff))}s ${diff > 0 ? 'longer' : 'shorter'} than your audio, so it may be a different version. Try another result, or fix it with Tap sync.`);
+    setWarn(`注意：這份歌詞比音訊${diff > 0 ? '長' : '短'} ${Math.round(Math.abs(diff))} 秒，可能是不同版本。可以換一個結果，或用「對拍」修正。`);
   } else setWarn('');
 }
 
@@ -919,8 +919,8 @@ const mediaState = { track: null, videos: [], instrumentals: [], video: null, in
 MediaFinder.localHelper().then((connected) => {
   const label = $('#helperStatus');
   label.hidden = false;
-  label.textContent = connected ? 'Direct YouTube search connected · no API key needed.'
-    : 'If automatic search is unavailable, find a video on YouTube and paste its link below.';
+  label.textContent = connected ? '已連接 YouTube 直接搜尋 · 不需要 API 金鑰。'
+    : '如果自動搜尋失效，可以到 YouTube 找影片，再把連結貼到下方。';
 });
 MediaFinder.localAudio().then((available) => {
   directAudio.available = available;
@@ -941,7 +941,7 @@ function renderMediaFallback(track, show) {
   $('#youtubeSearch').href = MediaFinder.youtubeSearchURL(track);
   $('#youtubeInstrumentalSearch').href = MediaFinder.youtubeSearchURL(track, true);
   $('#manualVideoHint').textContent = track.duration
-    ? `Choose a version close to ${fmt(track.duration)} for the best lyric sync.` : '';
+    ? `選擇長度接近 ${fmt(track.duration)} 的版本，歌詞會比較準。` : '';
 }
 
 // place: cue the best video automatically (false when the person's own audio should stay).
@@ -956,7 +956,7 @@ async function findMediaFor(track, { place = true, prefer = null } = {}) {
   $('#manualInstrumental').checked = false;
   // Give hosted users a usable path while public mirrors are still responding.
   renderMediaFallback(track, true);
-  setMediaStatus('Finding the video and backing track…');
+  setMediaStatus('正在尋找 MV 和伴奏…');
   renderMedia();
   let found;
   try {
@@ -967,9 +967,9 @@ async function findMediaFor(track, { place = true, prefer = null } = {}) {
   }
   if (mediaState.ctl !== ctl || state.track !== track) return;
   mediaState.searching = false;
-  const saved = (id, kind) => ({ id, title: 'Saved with the queue', author: '', length: 0, kind, diff: null });
-  if (prefer && prefer.yt && !found.videos.some((v) => v.id === prefer.yt)) found.videos.unshift(saved(prefer.yt, 'Saved video'));
-  if (prefer && prefer.inst && !found.instrumentals.some((v) => v.id === prefer.inst)) found.instrumentals.unshift(saved(prefer.inst, 'Saved instrumental'));
+  const saved = (id, kind) => ({ id, title: '隨排隊清單儲存', author: '', length: 0, kind, diff: null });
+  if (prefer && prefer.yt && !found.videos.some((v) => v.id === prefer.yt)) found.videos.unshift(saved(prefer.yt, '已存的影片'));
+  if (prefer && prefer.inst && !found.instrumentals.some((v) => v.id === prefer.inst)) found.instrumentals.unshift(saved(prefer.inst, '已存的伴奏'));
   mediaState.videos = found.videos;
   mediaState.instrumentals = found.instrumentals;
   mediaState.inst = (prefer && prefer.inst && found.instrumentals.find((v) => v.id === prefer.inst)) || found.instrumentals[0] || null;
@@ -977,14 +977,14 @@ async function findMediaFor(track, { place = true, prefer = null } = {}) {
   const searchDown = found.errors && found.errors.search;
   renderMediaFallback(track, !!searchDown || !found.videos.length || !found.instrumentals.length);
   if (!found.videos.length) {
-    setMediaStatus(searchDown ? 'Automatic video search is unavailable. Paste a YouTube link or use an audio file below.' : 'No matching video found. Use your own audio below.', !!searchDown);
+    setMediaStatus(searchDown ? '自動搜尋影片暫時無法使用，請貼上 YouTube 連結，或使用下方的音訊檔。' : '找不到符合的影片，請使用下方的自己的音訊。', !!searchDown);
   } else if (place) {
     const pick = (prefer && prefer.yt && found.videos.find((v) => v.id === prefer.yt)) || found.videos[0];
     chooseVideo(pick);
-    const fit = pick.diff != null && pick.diff <= 2 ? ', matching the lyrics’ length' : '';
-    setMediaStatus(`Cued the ${pick.kind.toLowerCase()}${fit}. Press play when you’re ready.`);
+    const fit = pick.diff != null && pick.diff <= 2 ? '，長度與歌詞相符' : '';
+    setMediaStatus(`已準備好${kindLabel(pick.kind)}${fit}。準備好就按播放。`);
   } else {
-    setMediaStatus('Your own audio is playing. Pick a video below to switch to it.');
+    setMediaStatus('正在播放你自己的音訊。點選下方影片可以切換。');
   }
   if (mediaState.inst && (prefer ? prefer.instOn : instPref) && (place || media.kind === 'yt')) setInstrumental(true);
   renderMedia();
@@ -1001,10 +1001,10 @@ function nextVideo(failedId) {
   mediaState.failed.add(failedId);
   const next = mediaState.videos.find((v) => !mediaState.failed.has(v.id));
   if (next) {
-    setMediaStatus('That video can’t be played here, so the next match was cued instead.');
+    setMediaStatus('這支影片無法在這裡播放，已改用下一個符合的影片。');
     chooseVideo(next);
   } else {
-    setMediaStatus('None of the videos found can be played here. Use your own audio below.', true);
+    setMediaStatus('找到的影片都無法在這裡播放，請使用下方的自己的音訊。', true);
     if (mediaState.track) renderMediaFallback(mediaState.track, true);
     renderMedia();
   }
@@ -1054,8 +1054,12 @@ function nextInstrumental(failedId) {
   mediaState.failed.add(failedId);
   const next = mediaState.instrumentals.find((v) => !mediaState.failed.has(v.id));
   if (next) chooseInstrumental(next);
-  else { stopInstrumental(); setMediaStatus('None of the instrumentals found can be played here.', true); }
+  else { stopInstrumental(); setMediaStatus('找到的伴奏都無法在這裡播放。', true); }
 }
+
+const KIND_LABELS = { 'Music video': 'MV', 'Official audio': '官方音訊', 'Lyric video': '歌詞影片', 'Audio': '音訊',
+  'Video': '影片', 'Karaoke track': 'KTV 伴唱', 'Instrumental': '伴奏' };
+function kindLabel(kind) { return KIND_LABELS[kind] || kind || ''; }
 
 function mediaItem(v, on, onClick) {
   const li = document.createElement('li');
@@ -1066,12 +1070,12 @@ function mediaItem(v, on, onClick) {
   img.alt = '';
   img.loading = 'lazy';
   const text = el('span', 'm-text');
-  const meta = el('span', 'm-meta', [v.kind, v.author, v.length ? fmt(v.length) : ''].filter(Boolean).join(' · '));
+  const meta = el('span', 'm-meta', [kindLabel(v.kind), v.author, v.length ? fmt(v.length) : ''].filter(Boolean).join(' · '));
   const D = mediaState.track && mediaState.track.duration;
   if (v.length && D) {
     const d = Math.round(v.length - D);
     meta.append(document.createTextNode(' · '),
-      Math.abs(d) <= 2 ? el('span', 'fit', 'matches lyrics') : el('span', 'off', `${Math.abs(d)}s ${d > 0 ? 'longer' : 'shorter'}`));
+      Math.abs(d) <= 2 ? el('span', 'fit', '與歌詞相符') : el('span', 'off', `${d > 0 ? '長' : '短'} ${Math.abs(d)} 秒`));
   }
   text.append(el('span', 'm-title', v.title), meta);
   b.append(img, text);
@@ -1089,7 +1093,7 @@ function renderMedia() {
   const items = shown.map((v) => mediaItem(v, v.id === current, () => { setMediaStatus(''); chooseVideo(v); }));
   if (videos.length > shown.length) {
     const li = document.createElement('li');
-    const more = el('button', 'media-more', `Show ${videos.length - shown.length} more`);
+    const more = el('button', 'media-more', `再顯示 ${videos.length - shown.length} 個`);
     more.type = 'button';
     more.addEventListener('click', () => { mediaState.showAll = true; renderMedia(); });
     li.append(more);
@@ -1100,14 +1104,14 @@ function renderMedia() {
   const toggle = $('#instToggle');
   toggle.disabled = !instrumentals.length;
   toggle.checked = instOn;
-  $('#instCount').textContent = mediaState.searching ? '' : instrumentals.length ? `${instrumentals.length} found` : mediaState.track ? 'none found' : '';
+  $('#instCount').textContent = mediaState.searching ? '' : instrumentals.length ? `找到 ${instrumentals.length} 個` : mediaState.track ? '沒有找到' : '';
   const list = $('#instList');
   list.hidden = !instOn || !instrumentals.length;
   const instShown = mediaState.showAllInst ? instrumentals : instrumentals.filter((v) => v === mediaState.inst);
   const instItems = instShown.map((v) => mediaItem(v, mediaState.inst === v, () => chooseInstrumental(v)));
   if (instrumentals.length > instShown.length) {
     const li = document.createElement('li');
-    const more = el('button', 'media-more', `Show ${instrumentals.length - instShown.length} other instrumental${instrumentals.length - instShown.length > 1 ? 's' : ''}`);
+    const more = el('button', 'media-more', `顯示其他 ${instrumentals.length - instShown.length} 個伴奏`);
     more.type = 'button';
     more.addEventListener('click', () => { mediaState.showAllInst = true; renderMedia(); });
     li.append(more);
@@ -1139,16 +1143,16 @@ function renderQueue() {
   ol.replaceChildren(...queue.map((q, i) => {
     const li = document.createElement('li');
     const mid = el('div');
-    const extra = q.instOn ? ' · instrumental' : q.yt ? ' · video' : '';
+    const extra = q.instOn ? ' · 伴奏' : q.yt ? ' · MV' : '';
     mid.append(el('div', 'q-name', q.singer), el('div', 'q-song', `${q.track} · ${q.artist}${extra}`));
     const x = el('button', 'q-x', '×');
     x.type = 'button';
-    x.setAttribute('aria-label', `Remove ${q.singer}`);
+    x.setAttribute('aria-label', `移除 ${q.singer}`);
     x.addEventListener('click', () => { queue.splice(i, 1); saveQueue(); });
     li.append(mid, x);
     return li;
   }));
-  if (!queue.length) ol.replaceChildren(el('p', 'queue-empty', 'Nobody’s queued yet. Load a song, type a name, add it.'));
+  if (!queue.length) ol.replaceChildren(el('p', 'queue-empty', '還沒有人排隊。先選一首歌，輸入名字，再按「加入」。'));
   $('#nextUp').disabled = !queue.length;
 }
 function saveQueue() { store.set('gkc.queue', queue); renderQueue(); }
@@ -1173,7 +1177,7 @@ async function nextSinger() {
     loadTrack(track, null, { prefer });
     media.seek(0);
   } catch {
-    setWarn('Couldn’t fetch the lyrics for that queued song.');
+    setWarn('無法取得這首排隊歌曲的歌詞。');
   }
 }
 
@@ -1203,7 +1207,7 @@ audio.addEventListener('loadedmetadata', checkDuration);
 $('#ytForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const id = ytId($('#ytUrl').value);
-  if (!id) { setWarn('That doesn’t look like a YouTube link.'); return; }
+  if (!id) { setWarn('這看起來不是 YouTube 連結。'); return; }
   media.own = true;
   mediaState.video = null;
   loadYouTube(id);
@@ -1224,7 +1228,7 @@ $('#manualVideoForm').addEventListener('submit', async (e) => {
   const id = ytId($('#manualVideoUrl').value);
   if (!id) {
     status.className = 'status err';
-    status.textContent = 'Paste a valid YouTube video link.';
+    status.textContent = '請貼上有效的 YouTube 影片連結。';
     return;
   }
   const track = mediaState.track;
@@ -1233,10 +1237,10 @@ $('#manualVideoForm').addEventListener('submit', async (e) => {
   mediaState.ctl = null;
   mediaState.searching = false;
   const instrumental = $('#manualInstrumental').checked;
-  const pick = { id, title: `${track.artistName} – ${track.trackName}`, author: 'Pasted YouTube link', length: 0,
+  const pick = { id, title: `${track.artistName} – ${track.trackName}`, author: '貼上的 YouTube 連結', length: 0,
     kind: instrumental ? 'Instrumental' : 'Video', diff: null };
   status.className = 'status';
-  status.textContent = 'Loading your YouTube link…';
+  status.textContent = '正在載入你的 YouTube 連結…';
   try {
     if (instrumental) {
       if (!mediaState.instrumentals.some((v) => v.id === id)) mediaState.instrumentals.push(pick);
@@ -1253,12 +1257,12 @@ $('#manualVideoForm').addEventListener('submit', async (e) => {
     }
     if (mediaState.track !== track) return;
     media.own = true;
-    status.textContent = 'Link loaded. Press play when you’re ready.';
-    setMediaStatus('Using your YouTube link with the selected lyrics.');
+    status.textContent = '連結已載入，準備好就按播放。';
+    setMediaStatus('正在用你的 YouTube 連結搭配選好的歌詞。');
   } catch (error) {
     console.error('Could not load the pasted YouTube link', error);
     status.className = 'status err';
-    status.textContent = 'YouTube could not load that link. Try another video or an audio file.';
+    status.textContent = 'YouTube 無法載入這個連結，請換一支影片或改用音訊檔。';
   }
   renderMedia();
 });
@@ -1273,7 +1277,7 @@ applyYtMode();
 $('#useClock').addEventListener('click', () => {
   stopInstrumental();
   media.own = true;
-  media.use('clock', 'Stage clock');
+  media.use('clock', '舞台計時器');
   media.seek(0);
   renderMedia();
 });
@@ -1291,7 +1295,7 @@ $('#queueForm').addEventListener('submit', (e) => {
   e.preventDefault();
   const singer = $('#singer').value.trim();
   if (!singer) { $('#singer').focus(); return; }
-  if (!state.track) { setWarn('Load a song first, then add it to the queue.'); return; }
+  if (!state.track) { setWarn('請先載入一首歌，再加入排隊。'); return; }
   const { syncedLyrics, plainLyrics, ...song } = state.track;
   queue.push({
     singer, song, trackId: state.track.id, track: state.track.trackName, artist: state.track.artistName,

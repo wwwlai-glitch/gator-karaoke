@@ -10,7 +10,7 @@ class DirectAudio {
     this.audio.addEventListener('error', () => {
       if (!this.active) return;
       const id = this.requested;
-      this.error = 'Song audio could not play. Retry it or use an audio file.';
+      this.error = '歌曲音訊無法播放，請重試或改用音訊檔。';
       this.release(true);
       this.requested = id;
     });

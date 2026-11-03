@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Gator Karaoke Club</title>
+  <title>鱷魚 KTV</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Noto+Sans+TC:wght@400;500;700;900&family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>">
 </head>
@@ -31,12 +31,12 @@
         <path class="g-note" d="M118 6 v12 a4 4 0 1 1 -2 -3.4 v-6.6 l10 -2 v10 a4 4 0 1 1 -2 -3.4 v-4.6 z"/>
       </svg>
       <div>
-        <h1>Gator Karaoke Club</h1>
-        <p class="tag">Grab the mic. Show some teeth.</p>
+        <h1>鱷魚 KTV</h1>
+        <p class="tag">拿起麥克風，盡情開唱。</p>
       </div>
     </div>
     <div class="now" id="nowWrap" hidden>
-      <span class="now-label">Now singing</span>
+      <span class="now-label">現在演唱</span>
       <span class="now-name" id="nowSinger"></span>
     </div>
   </header>
@@ -44,111 +44,111 @@
   <main class="layout">
     <aside class="side">
       <section class="card">
-        <h2><span class="step">1</span> Find the song</h2>
+        <h2><span class="step">1</span> 找歌</h2>
         <form id="searchForm" class="row">
-          <input id="q" type="search" placeholder="Song, artist, or both" autocomplete="off">
-          <button class="btn" type="submit">Search</button>
+          <input id="q" type="search" placeholder="歌名、歌手，或兩者都輸入" autocomplete="off">
+          <button class="btn" type="submit">搜尋</button>
         </form>
-        <label class="check"><input type="checkbox" id="syncedOnly" checked> Synced lyrics only</label>
+        <label class="check"><input type="checkbox" id="syncedOnly" checked> 只顯示同步歌詞</label>
         <div id="searchStatus" class="status" aria-live="polite"></div>
         <div class="timing-source" id="timingStatus" aria-live="polite" hidden></div>
         <div id="results" class="results"></div>
       </section>
 
       <section class="card" id="mediaCard">
-        <h2><span class="step">2</span> Video &amp; backing track</h2>
+        <h2><span class="step">2</span> MV 與伴奏</h2>
         <p class="hint" id="helperStatus" aria-live="polite" hidden></p>
-        <div id="mediaStatus" class="status" aria-live="polite">Pick a song and its video is found automatically.</div>
+        <div id="mediaStatus" class="status" aria-live="polite">選好歌，系統會自動幫你找 MV。</div>
         <div class="media-fallback" id="mediaFallback" hidden>
-          <p class="hint">Find a version on YouTube, then paste its link here. Your selected lyrics stay on stage.</p>
+          <p class="hint">到 YouTube 找一個版本，把連結貼在這裡。已選好的歌詞會保留。</p>
           <div class="row small">
-            <a class="btn" id="youtubeSearch" target="_blank" rel="noopener noreferrer">Find song on YouTube ↗</a>
-            <a class="btn ghost" id="youtubeInstrumentalSearch" target="_blank" rel="noopener noreferrer">Instrumental ↗</a>
+            <a class="btn" id="youtubeSearch" target="_blank" rel="noopener noreferrer">到 YouTube 找歌 ↗</a>
+            <a class="btn ghost" id="youtubeInstrumentalSearch" target="_blank" rel="noopener noreferrer">找伴奏 ↗</a>
           </div>
           <form id="manualVideoForm">
             <div class="row">
-              <input id="manualVideoUrl" type="text" inputmode="url" placeholder="Paste the YouTube link here" aria-label="YouTube video link" autocomplete="off" required>
-              <button class="btn orange" type="submit">Load</button>
+              <input id="manualVideoUrl" type="text" inputmode="url" placeholder="在這裡貼上 YouTube 連結" aria-label="YouTube 影片連結" autocomplete="off" required>
+              <button class="btn orange" type="submit">載入</button>
             </div>
-            <label class="check"><input type="checkbox" id="manualInstrumental"> Use as instrumental backing track</label>
+            <label class="check"><input type="checkbox" id="manualInstrumental"> 當作伴奏（無原唱）使用</label>
           </form>
           <p class="hint" id="manualVideoHint"></p>
           <p class="status" id="manualVideoStatus" aria-live="polite"></p>
         </div>
-        <ul id="videoList" class="media-list" aria-label="Videos"></ul>
+        <ul id="videoList" class="media-list" aria-label="影片"></ul>
 
         <div class="inst-row">
           <label class="switch">
             <input type="checkbox" id="instToggle" disabled>
             <span class="switch-track" aria-hidden="true"></span>
-            <span class="switch-label">Instrumental <span class="muted">(no lead vocals)</span></span>
+            <span class="switch-label">伴奏 <span class="muted">（去除原唱）</span></span>
           </label>
           <span class="inst-count muted" id="instCount"></span>
         </div>
-        <ul id="instList" class="media-list" aria-label="Instrumentals" hidden></ul>
+        <ul id="instList" class="media-list" aria-label="伴奏" hidden></ul>
 
         <div class="row small">
-          <span class="muted">Background:</span>
+          <span class="muted">背景：</span>
           <div class="seg" id="ytMode">
-            <button type="button" data-mode="bg" aria-pressed="true">Behind lyrics</button>
-            <button type="button" data-mode="viz" aria-pressed="false">Visualizer</button>
-            <button type="button" data-mode="off" aria-pressed="false">Hidden</button>
+            <button type="button" data-mode="bg" aria-pressed="true">MV 在歌詞後</button>
+            <button type="button" data-mode="viz" aria-pressed="false">視覺特效</button>
+            <button type="button" data-mode="off" aria-pressed="false">隱藏</button>
           </div>
         </div>
 
         <div id="vizControls" class="viz-controls" hidden>
-          <label for="vizPreset">MilkDrop preset</label>
-          <select id="vizPreset" disabled><option>Loading presets…</option></select>
+          <label for="vizPreset">MilkDrop 特效</label>
+          <select id="vizPreset" disabled><option>特效載入中…</option></select>
           <div class="row small">
-            <button type="button" class="btn ghost" id="vizShuffle" disabled>Shuffle</button>
-            <label class="check"><input type="checkbox" id="vizAuto" checked> Change every 30s</label>
+            <button type="button" class="btn ghost" id="vizShuffle" disabled>隨機</button>
+            <label class="check"><input type="checkbox" id="vizAuto" checked> 每 30 秒換一次</label>
           </div>
-          <button type="button" class="btn wide" id="vizAudio" aria-describedby="vizCaptureHint">Connect tab audio…</button>
-          <p class="hint" id="vizCaptureHint">Your browser opens a sharing picker. Choose this tab and enable tab audio. Only sound is used, locally; the picture is ignored.</p>
-          <p class="hint" id="vizStatus" aria-live="polite">Animated MilkDrop backgrounds. Audio files react automatically.</p>
+          <button type="button" class="btn wide" id="vizAudio" aria-describedby="vizCaptureHint">連接分頁音訊…</button>
+          <p class="hint" id="vizCaptureHint">瀏覽器會跳出分享視窗，請選擇這個分頁並開啟分頁音訊。只會在本機使用聲音，不會使用畫面。</p>
+          <p class="hint" id="vizStatus" aria-live="polite">MilkDrop 動態背景。音訊檔會自動跟著音樂律動。</p>
         </div>
 
         <details class="own" id="ownAudio">
-          <summary>Use your own audio instead</summary>
+          <summary>改用自己的音訊或 YouTube 連結</summary>
           <div class="tabs" role="tablist">
-            <button role="tab" class="tab" data-tab="file" aria-selected="true">Audio file</button>
-            <button role="tab" class="tab" data-tab="yt" aria-selected="false">YouTube link</button>
-            <button role="tab" class="tab" data-tab="clock" aria-selected="false">Other device</button>
+            <button role="tab" class="tab" data-tab="file" aria-selected="true">音訊檔</button>
+            <button role="tab" class="tab" data-tab="yt" aria-selected="false">YouTube 連結</button>
+            <button role="tab" class="tab" data-tab="clock" aria-selected="false">其他裝置</button>
           </div>
 
           <div class="tabpanel" data-panel="file">
             <label class="drop" id="drop">
               <input type="file" id="fileInput" accept="audio/*,video/mp4,.mp3,.m4a,.flac,.ogg,.wav,.opus,.aac">
-              <strong>Drop a song here</strong>
-              <span>or click to pick an MP3 / M4A / FLAC / WAV.<br>Lyrics are matched automatically from its tags or file name.</span>
+              <strong>把歌曲檔拖到這裡</strong>
+              <span>或點這裡選擇 MP3／M4A／FLAC／WAV 檔。<br>會依照檔案標籤或檔名自動配對歌詞。</span>
             </label>
           </div>
 
           <div class="tabpanel" data-panel="yt" hidden>
             <form id="ytForm" class="row">
-              <input id="ytUrl" type="text" placeholder="Paste a YouTube link" autocomplete="off">
-              <button class="btn" type="submit">Load</button>
+              <input id="ytUrl" type="text" placeholder="貼上 YouTube 連結" autocomplete="off">
+              <button class="btn" type="submit">載入</button>
             </form>
-            <p class="hint">The video's title is used to find lyrics. Some videos block embedding, so try the official audio upload if one won't play.</p>
+            <p class="hint">系統會用影片標題找歌詞。有些影片不允許嵌入播放，如果無法播放，請改用官方音訊版本。</p>
           </div>
 
           <div class="tabpanel" data-panel="clock" hidden>
-            <p class="hint">Playing from Spotify, a speaker, or a phone? Pick a song above, then press <kbd>Space</kbd> as you hit play on the other device. Press <kbd>T</kbd> the instant the <em>next</em> line starts to lock the sync.</p>
-            <button class="btn wide" id="useClock" type="button">Use the stage clock</button>
+            <p class="hint">用 Spotify、音響或手機播放？先在上方選歌，在另一台裝置按下播放的同時按 <kbd>空白鍵</kbd>。<em>下一句</em>開始的瞬間按 <kbd>T</kbd>，就能對準歌詞時間。</p>
+            <button class="btn wide" id="useClock" type="button">使用舞台計時器</button>
           </div>
         </details>
-        <p class="source-line">Playing: <span id="sourceName">Stage clock</span></p>
+        <p class="source-line">播放來源：<span id="sourceName">舞台計時器</span></p>
       </section>
 
       <section class="card">
-        <h2><span class="step alt">3</span> Singer queue</h2>
+        <h2><span class="step alt">3</span> 點歌排隊</h2>
         <form id="queueForm" class="row">
-          <input id="singer" type="text" placeholder="Singer's name" autocomplete="off" maxlength="40">
-          <button class="btn ghost" type="submit">Add song</button>
+          <input id="singer" type="text" placeholder="演唱者名字" autocomplete="off" maxlength="40">
+          <button class="btn ghost" type="submit">加入</button>
         </form>
-        <p class="hint">Adds the song on stage right now, with its video and backing-track choice. Audio files need to be dropped in again.</p>
+        <p class="hint">會把目前舞台上的歌，連同選好的 MV 和伴奏一起加入排隊。音訊檔需要重新拖入。</p>
         <ol id="queue" class="queue"></ol>
-        <button class="btn wide orange" id="nextUp" type="button" disabled>Next singer up</button>
+        <button class="btn wide orange" id="nextUp" type="button" disabled>下一位上場</button>
       </section>
     </aside>
 
@@ -159,8 +159,8 @@
 
       <div class="stage-head">
         <div class="track">
-          <div class="track-title" id="trackTitle">Pick a song</div>
-          <div class="track-artist" id="trackArtist">Search for a song on the left. Its video is found for you.</div>
+          <div class="track-title" id="trackTitle">請選一首歌</div>
+          <div class="track-artist" id="trackArtist">在左邊搜尋歌曲，系統會自動幫你找 MV。</div>
         </div>
         <div class="warn" id="warn" hidden></div>
       </div>
@@ -169,11 +169,11 @@
         <div class="lyrics" id="lyrics"></div>
         <div class="countdown" id="countdown" hidden><i></i><i></i><i></i></div>
         <div class="welcome" id="welcome">
-          <div class="welcome-big">Ready when you are, gator.</div>
+          <div class="welcome-big">準備好就開唱吧！</div>
           <ol>
-            <li>Search for a song. Results with word-by-word timing are listed first.</li>
-            <li>The music video and an instrumental backing track are found automatically. Switch off <strong>Instrumental</strong> to hear the original vocals.</li>
-            <li>Lines light up orange as you sing. Click any line to jump to it.</li>
+            <li>搜尋歌曲。有逐字時間軸的結果會排在最前面。</li>
+            <li>系統會自動找 MV 和伴奏。想聽原唱，就把<strong>伴奏</strong>開關關掉。</li>
+            <li>唱歌時歌詞會亮成橘色。點任何一句就能跳到那裡。</li>
           </ol>
         </div>
         <div class="plain" id="plain" hidden></div>
@@ -181,28 +181,28 @@
 
       <div class="stage-controls" id="stageControls">
       <div class="transport">
-        <button class="play" id="playBtn" type="button" aria-label="Play">
+        <button class="play" id="playBtn" type="button" aria-label="播放">
           <svg viewBox="0 0 24 24" class="i-play"><path d="M7 4.5v15l13-7.5z"/></svg>
           <svg viewBox="0 0 24 24" class="i-pause"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></svg>
         </button>
         <span class="time" id="curTime">0:00</span>
-        <input type="range" id="seek" min="0" max="100" step="0.1" value="0" aria-label="Seek">
+        <input type="range" id="seek" min="0" max="100" step="0.1" value="0" aria-label="播放進度">
         <span class="time" id="durTime">0:00</span>
 
-        <div class="sync" title="Shift lyrics earlier or later. Keys: [ and ]">
-          <button type="button" class="mini" id="offMinus" aria-label="Lyrics later">−</button>
+        <div class="sync" title="讓歌詞提早或延後。快捷鍵：[ 和 ]">
+          <button type="button" class="mini" id="offMinus" aria-label="歌詞延後">−</button>
           <span class="off" id="offVal">±0.0s</span>
-          <button type="button" class="mini" id="offPlus" aria-label="Lyrics earlier">+</button>
-          <button type="button" class="mini tap" id="tapBtn" title="Tap the moment the next line starts (T)">Tap sync</button>
+          <button type="button" class="mini" id="offPlus" aria-label="歌詞提早">+</button>
+          <button type="button" class="mini tap" id="tapBtn" title="在下一句開始的瞬間按下（T）">對拍</button>
         </div>
-        <button type="button" class="mini" id="fsBtn" title="Full screen (F)">⛶</button>
+        <button type="button" class="mini" id="fsBtn" title="全螢幕（F）">⛶</button>
       </div>
       <div class="keys">
-        <span><kbd>Space</kbd> play/pause</span>
-        <span><kbd>←</kbd><kbd>→</kbd> 5s</span>
-        <span><kbd>[</kbd><kbd>]</kbd> nudge sync</span>
-        <span><kbd>T</kbd> tap sync</span>
-        <span><kbd>F</kbd> full screen</span>
+        <span><kbd>空白鍵</kbd> 播放／暫停</span>
+        <span><kbd>←</kbd><kbd>→</kbd> 快轉／倒轉 5 秒</span>
+        <span><kbd>[</kbd><kbd>]</kbd> 微調歌詞</span>
+        <span><kbd>T</kbd> 對拍</span>
+        <span><kbd>F</kbd> 全螢幕</span>
       </div>
       </div>
     </section>

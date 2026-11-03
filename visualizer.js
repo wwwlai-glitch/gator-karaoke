@@ -28,7 +28,7 @@ class StageVisualizer {
     });
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
-      this.fail('The visualizer lost its graphics connection. Switch backgrounds to retry.');
+      this.fail('視覺特效失去繪圖連線，請切換背景再試一次。');
     });
     canvas.addEventListener('webglcontextrestored', () => { this.connect(null); this.engine = null; });
     window.addEventListener('pagehide', () => this.stopCapture());
@@ -82,7 +82,7 @@ class StageVisualizer {
       this.stopCapture();
       return;
     }
-    this.status.textContent = 'Loading MilkDrop presets…';
+    this.status.textContent = 'MilkDrop 特效載入中…';
     // Resume synchronously from the click when an audio context already exists.
     if (this.context) this.context.resume().catch(() => {});
     try {
@@ -128,7 +128,7 @@ class StageVisualizer {
       this.select.value = name;
       this.store.set('gkc.vizPreset', name);
       this.presetAt = performance.now();
-    } catch (e) { this.status.textContent = `This preset could not load. Choose another. ${e.message}`; }
+    } catch (e) { this.status.textContent = `這個特效無法載入，請換一個。${e.message}`; }
   }
 
   shuffle() {
@@ -170,12 +170,12 @@ class StageVisualizer {
     this.shareButton.hidden = file || (firefox && !preparing);
     this.shareButton.disabled = !!(preparing && !direct.error);
     this.shareHint.hidden = file || !!this.stream || !!preparing;
-    this.shareButton.textContent = this.stream ? 'Disconnect tab audio' : 'Connect tab audio…';
-    if (preparing) this.shareButton.textContent = direct.error ? 'Retry song audio' : 'Preparing song audio…';
-    if (firefox) this.shareHint.textContent = 'Firefox cannot capture tab audio. Use the local launcher for direct song audio, or load an audio file. No screen sharing is needed.';
+    this.shareButton.textContent = this.stream ? '中斷分頁音訊' : '連接分頁音訊…';
+    if (preparing) this.shareButton.textContent = direct.error ? '重試歌曲音訊' : '正在準備歌曲音訊…';
+    if (firefox) this.shareHint.textContent = 'Firefox 無法擷取分頁音訊。請改用本機啟動程式播放歌曲音訊，或載入音訊檔，不需要分享螢幕。';
     this.status.textContent = file
-      ? `${this.names.length} presets · ${source === 'direct' ? 'Reacting directly to the song. No screen sharing needed.' : 'Reacting to your audio file.'}`
-      : preparing ? (direct.error || 'Preparing song audio for the visualizer. Playback will switch automatically; no screen sharing needed.')
+      ? `共 ${this.names.length} 種特效 · ${source === 'direct' ? '直接跟著歌曲律動，不需要分享螢幕。' : '跟著你的音訊檔律動。'}`
+      : preparing ? (direct.error || '正在為視覺特效準備歌曲音訊，播放會自動切換，不需要分享螢幕。')
       : this.stream ? `${this.names.length} presets · Reacting to shared audio.`
         : `${this.names.length} presets · Ambient motion. Connect this tab’s audio to react to YouTube, or choose another browser tab playing music.`;
   }
@@ -183,11 +183,11 @@ class StageVisualizer {
   async capture() {
     if (this.capturing) return;
     if (/Firefox\/|FxiOS\//.test(navigator.userAgent || '')) {
-      this.status.textContent = 'Firefox cannot capture tab audio. Use the local launcher for direct song audio, or load an audio file.';
+      this.status.textContent = 'Firefox 無法擷取分頁音訊。請改用本機啟動程式播放歌曲音訊，或載入音訊檔。';
       return;
     }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-      this.status.textContent = 'Tab audio sharing is unavailable here. Use Chrome or Edge, or load an audio file. Ambient visuals still work.';
+      this.status.textContent = '這裡無法分享分頁音訊，請改用 Chrome 或 Edge，或載入音訊檔。背景特效仍可使用。';
       return;
     }
     this.capturing = true;
@@ -211,11 +211,11 @@ class StageVisualizer {
       const surface = videoTracks[0] && videoTracks[0].getSettings().displaySurface;
       videoTracks.forEach((track) => { track.enabled = false; });
       if (surface && surface !== 'browser') {
-        this.status.textContent = 'Choose a browser tab with tab audio enabled. Screen and window sharing are not used.';
+        this.status.textContent = '請選擇一個瀏覽器分頁並開啟分頁音訊，不會使用螢幕或視窗分享。';
         return;
       }
       if (!stream.getAudioTracks().length) {
-        this.status.textContent = 'No audio was shared. Try again, choose a browser tab, and enable “Share tab audio”.';
+        this.status.textContent = '沒有分享到音訊。請再試一次，選擇瀏覽器分頁並開啟「分享分頁音訊」。';
         return;
       }
       await this.init();
@@ -229,8 +229,8 @@ class StageVisualizer {
       this.describeAudio();
     } catch (e) {
       this.status.textContent = e.name === 'NotAllowedError'
-        ? 'Audio sharing was cancelled. Ambient visuals still work; you can try sharing again.'
-        : `Could not share audio. ${e.message}`;
+        ? '已取消音訊分享。背景特效仍可使用，你可以再分享一次。'
+        : `無法分享音訊。${e.message}`;
     } finally {
       if (stream && this.stream !== stream) stream.getTracks().forEach((t) => t.stop());
       this.capturing = false;
@@ -254,7 +254,7 @@ class StageVisualizer {
       try {
         if (this.auto.checked && this.playing() && now - this.presetAt >= 30000) this.shuffle();
         this.engine.render();
-      } catch (e) { this.fail(`The visualizer stopped. ${e.message}`); return; }
+      } catch (e) { this.fail(`視覺特效已停止。${e.message}`); return; }
     }
     this.raf = requestAnimationFrame(this.frame);
   }
