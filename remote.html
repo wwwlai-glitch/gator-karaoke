@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#050f26">
+  <title>鱷魚 KTV 點歌</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="remote.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐊</text></svg>">
+</head>
+<body>
+  <header class="top">
+    <h1>鱷魚 KTV 點歌</h1>
+    <p class="conn" id="conn" aria-live="polite">正在連線到電視…</p>
+  </header>
+
+  <main>
+    <section class="card" id="nameCard">
+      <label for="singer">你的名字</label>
+      <input id="singer" type="text" maxlength="40" placeholder="會顯示在歌單上" autocomplete="nickname">
+    </section>
+
+    <section class="card">
+      <h2>1. 找歌</h2>
+      <form id="searchForm" class="row">
+        <input id="q" type="search" placeholder="歌名、歌手，或兩者都輸入" autocomplete="off" enterkeyhint="search">
+        <button class="btn" type="submit">搜尋</button>
+      </form>
+      <p class="status" id="searchStatus" aria-live="polite"></p>
+      <ul class="results" id="results"></ul>
+    </section>
+
+    <section class="card" id="previewCard" hidden>
+      <h2>2. 預覽 MV</h2>
+      <div class="picked" id="picked"></div>
+      <div class="player" id="player"><p class="muted">正在找 MV…</p></div>
+      <p class="status" id="mediaStatus" aria-live="polite"></p>
+      <ul class="videos" id="videos" aria-label="可選的影片"></ul>
+      <details class="paste" id="pasteBox">
+        <summary>沒有喜歡的 MV？自己貼 YouTube 連結</summary>
+        <a class="btn ghost" id="ytSearch" target="_blank" rel="noopener noreferrer">到 YouTube 找 ↗</a>
+        <form id="pasteForm" class="row">
+          <input id="pasteUrl" type="text" inputmode="url" placeholder="貼上 YouTube 連結" autocomplete="off">
+          <button class="btn" type="submit">預覽</button>
+        </form>
+      </details>
+      <label class="check" id="instRow" hidden><input type="checkbox" id="instOn" checked> <span id="instLabel">用伴奏唱（去除原唱）</span></label>
+      <button class="btn big orange" id="addBtn" type="button" disabled>加入歌單</button>
+      <p class="status" id="addStatus" aria-live="polite"></p>
+    </section>
+
+    <section class="card">
+      <h2>目前歌單</h2>
+      <p class="now" id="now" hidden></p>
+      <ol class="queue" id="queue"><li class="muted">連線後會顯示歌單</li></ol>
+    </section>
+  </main>
+
+  <script src="word-timing.js"></script>
+  <script src="media-finder.js"></script>
+  <script src="vendor/peerjs-1.5.5.min.js"></script>
+  <script src="remote.js"></script>
+</body>
+</html>

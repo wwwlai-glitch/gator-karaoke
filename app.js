@@ -1143,7 +1143,7 @@ function renderQueue() {
   ol.replaceChildren(...queue.map((q, i) => {
     const li = document.createElement('li');
     const mid = el('div');
-    const extra = q.instOn ? ' · 伴奏' : q.yt ? ' · MV' : '';
+    const extra = (q.instOn ? ' · 伴奏' : q.yt ? ' · MV' : '') + (q.fromPhone ? ' · 手機點歌' : '');
     mid.append(el('div', 'q-name', q.singer), el('div', 'q-song', `${q.track} · ${q.artist}${extra}`));
     const x = el('button', 'q-x', '×');
     x.type = 'button';
@@ -1155,7 +1155,12 @@ function renderQueue() {
   if (!queue.length) ol.replaceChildren(el('p', 'queue-empty', '還沒有人排隊。先選一首歌，輸入名字，再按「加入」。'));
   $('#nextUp').disabled = !queue.length;
 }
-function saveQueue() { store.set('gkc.queue', queue); renderQueue(); }
+let nowPlaying = null;
+function saveQueue() {
+  store.set('gkc.queue', queue);
+  renderQueue();
+  if (typeof PartyHost !== 'undefined') PartyHost.broadcast(PartyHost.snapshot(queue, nowPlaying));
+}
 
 async function nextSinger() {
   const q = queue.shift();
@@ -1163,6 +1168,8 @@ async function nextSinger() {
   if (!q) return;
   $('#nowWrap').hidden = false;
   $('#nowSinger').textContent = q.singer;
+  nowPlaying = { singer: q.singer, track: q.track };
+  if (typeof PartyHost !== 'undefined') PartyHost.broadcast(PartyHost.snapshot(queue, nowPlaying));
   const prefer = { yt: q.yt || null, inst: q.inst || null, instOn: !!q.instOn };
   try {
     let track = q.song;
@@ -1333,3 +1340,13 @@ document.addEventListener('keydown', (e) => {
 });
 
 requestAnimationFrame(frame);
+
+/* ---------- phone requests (QR code on the stage) ---------- */
+if (typeof PartyHost !== 'undefined') {
+  PartyHost.start({
+    store,
+    getQueue: () => queue,
+    getNow: () => nowPlaying,
+    add(item) { queue.push(item); saveQueue(); return queue.length; },
+  });
+}

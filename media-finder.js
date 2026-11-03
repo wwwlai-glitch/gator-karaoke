@@ -57,6 +57,8 @@ const MediaFinder = (() => {
     '翻唱', '抖音', '加速', '降速', '慢速', '教學', '教学', '舞蹈', '混音'];
   const INSTRUMENTAL = ['instrumental', 'karaoke', 'backing track', 'minus one', 'off vocal', 'no vocals', 'without vocals',
     'ktv', '伴奏', '伴唱', '卡拉ok', '消音', '去人聲', '去人声', '純音樂', '纯音乐', '無人聲', '无人声'];
+  // Chinese lyric-video labels: 歌詞版, 動態歌詞, 字幕 and their simplified forms.
+  const LYRIC_ZH = ['歌詞', '歌词', '字幕'];
   // Titles that mark a sing-along (karaoke) track rather than a plain instrumental.
   const KARAOKE = ['karaoke', 'ktv', '卡拉ok', '伴唱'];
   const NOT_BACKING = ['piano', 'guitar', 'violin', 'cello', 'sax', 'saxophone', 'drum', 'drums', 'ukulele', 'orchestra',
@@ -82,7 +84,8 @@ const MediaFinder = (() => {
       // "Official" in a title is easy to fake, so only the uploader counts.
       official: topic || artistAuthor || /vevo$/.test(author.replace(/ /g, '')),
       musicVideo: has(title, 'official video') || has(title, 'official music video') || has(title, 'music video') || has(title, 'mv'),
-      lyricVideo: has(title, 'lyrics') || has(title, 'lyric') || has(title, 'lyric video'),
+      lyricVideo: has(title, 'lyrics') || has(title, 'lyric') || has(title, 'lyric video')
+        || LYRIC_ZH.some((w) => has(title, w)),
       diff: track.duration > 0 && video.length > 0 ? Math.abs(video.length - track.duration) : null,
     };
   }
@@ -266,18 +269,22 @@ const MediaFinder = (() => {
   async function find(track, { signal } = {}) {
     const artist = artistParts(track.artistName).length ? track.artistName : '';
     const q = `${artist} ${baseTitle(track.trackName)}`.trim();
-    const [wd, main, audio, inst, instZh] = await Promise.allSettled([
+    const zh = CJK.test(q);
+    const [wd, main, audio, inst, instZh, lyricZh, subsZh] = await Promise.allSettled([
       wikidataVideos(track, { signal }),
       youtubeSearch(q, { signal }),
       youtubeSearch(`${q} official audio`, { signal }),
       youtubeSearch(`${q} instrumental`, { signal }),
       // Chinese uploads label backing tracks 伴奏 rather than "instrumental".
-      CJK.test(q) ? youtubeSearch(`${q} 伴奏`, { signal }) : Promise.resolve([]),
+      zh ? youtubeSearch(`${q} 伴奏`, { signal }) : Promise.resolve([]),
+      // Chinese lyric videos (歌詞版 / 字幕) are often the best-synced uploads.
+      zh ? youtubeSearch(`${q} 歌詞`, { signal }) : Promise.resolve([]),
+      zh ? youtubeSearch(`${q} 字幕`, { signal }) : Promise.resolve([]),
     ]);
     if (signal && signal.aborted) throw new DOMException('Aborted', 'AbortError');
     const value = (r) => (r.status === 'fulfilled' ? r.value : []);
     const wikidata = value(wd);
-    const searches = [value(main), value(audio)].flat();
+    const searches = [value(main), value(audio), value(lyricZh), value(subsZh)].flat();
     const instList = [...value(inst), ...value(instZh)];
     const ranked = rankVideos(track, [...searches, ...instList.filter((v) => wikidata.includes(v.id))], wikidata);
     // Always offer the official music video, even when its length differs.

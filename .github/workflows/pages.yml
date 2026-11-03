@@ -32,6 +32,8 @@ jobs:
           node --check visualizer.js
           node --check direct-audio.js
           node --check fullscreen-controls.js
+          node --check party-host.js
+          node --check remote.js
           node --test tests/*.test.cjs
           # Real Firefox audio is a local-helper integration test. The hosted
           # runner blocks its namespace sandbox, and Pages ships static files.
@@ -42,10 +44,11 @@ jobs:
         run: |
           mkdir _site
           cp index.html style.css app.js word-timing.js media-finder.js visualizer.js direct-audio.js fullscreen-controls.js _site/
+          cp party-host.js remote.html remote.js remote.css _site/
           cp -r vendor _site/
           # Give every deployment fresh asset URLs, including in returning browsers.
-          for asset in style.css app.js word-timing.js media-finder.js visualizer.js direct-audio.js fullscreen-controls.js; do
-            sed -i "s|\"${asset}\"|\"${asset}?v=${GITHUB_SHA}\"|g" _site/index.html
+          for asset in style.css app.js word-timing.js media-finder.js visualizer.js direct-audio.js fullscreen-controls.js party-host.js remote.js remote.css; do
+            sed -i "s|\"${asset}\"|\"${asset}?v=${GITHUB_SHA}\"|g" _site/index.html _site/remote.html
           done
       - name: Upload site
         uses: actions/upload-pages-artifact@v4

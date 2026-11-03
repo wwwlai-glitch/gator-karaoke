@@ -147,6 +147,7 @@
           <button class="btn ghost" type="submit">加入</button>
         </form>
         <p class="hint">會把目前舞台上的歌，連同選好的 MV 和伴奏一起加入排隊。音訊檔需要重新拖入。</p>
+        <label class="check"><input type="checkbox" id="qrToggle" checked> 在舞台左上角顯示點歌 QR Code</label>
         <ol id="queue" class="queue"></ol>
         <button class="btn wide orange" id="nextUp" type="button" disabled>下一位上場</button>
       </section>
@@ -158,6 +159,15 @@
       <div class="yt-inst" aria-hidden="true"><div id="ytInstPlayer"></div></div>
 
       <div class="stage-head">
+        <aside class="qr-panel" id="qrPanel" aria-label="手機點歌">
+          <div class="qr-code" id="qrCode"></div>
+          <div class="qr-text">
+            <strong>手機掃碼點歌</strong>
+            <span>房間 <b id="qrRoom"></b></span>
+            <span class="qr-status" id="qrStatus" aria-live="polite"></span>
+            <a class="qr-link" id="qrLink" target="_blank" rel="noopener">開啟點歌頁 ↗</a>
+          </div>
+        </aside>
         <div class="track">
           <div class="track-title" id="trackTitle">請選一首歌</div>
           <div class="track-artist" id="trackArtist">在左邊搜尋歌曲，系統會自動幫你找 MV。</div>
@@ -214,6 +224,9 @@
   <script src="visualizer.js"></script>
   <script src="direct-audio.js"></script>
   <script src="fullscreen-controls.js"></script>
+  <script src="vendor/qrcode-generator-2.0.4.js"></script>
+  <script src="vendor/peerjs-1.5.5.min.js"></script>
+  <script src="party-host.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
