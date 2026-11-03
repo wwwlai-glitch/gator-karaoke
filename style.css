@@ -230,6 +230,10 @@ input[type=text]:focus, input[type=search]:focus { border-color: var(--blue-2); 
 .q-song { font-size: .8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .q-x { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 1.1rem; padding: 2px 6px; border-radius: 6px; }
 .q-x:hover { color: #fff; background: var(--panel-2); }
+.history-select { width: 100%; min-width: 0; padding: 9px; border-radius: 8px; background: #071634; color: var(--text); border: 1px solid var(--line); font: inherit; font-size: .9rem; margin-top: 4px; }
+.history-actions { margin-top: 8px; flex-wrap: wrap; }
+.history { max-height: 320px; overflow-y: auto; }
+.mini-btn { padding: 4px 10px; font-size: .78rem; white-space: nowrap; }
 .queue-empty { font-size: .85rem; color: var(--muted); margin: 10px 0 0; }
 
 /* ---------- stage ---------- */

@@ -160,6 +160,21 @@
         <ol id="queue" class="queue"></ol>
         <button class="btn wide orange" id="nextUp" type="button" disabled>下一位上場</button>
       </section>
+
+      <section class="card">
+        <h2><span class="step alt">4</span> 歌單紀錄</h2>
+        <p class="hint">每首被點的歌都會存進當天的歌單，以日期命名。凌晨 6 點前點的歌算在前一天。</p>
+        <p class="hint" id="historyEmpty">今天還沒有人點歌。</p>
+        <div id="historyBox" hidden>
+          <select id="historyDate" class="history-select" aria-label="選擇日期"></select>
+          <div class="row small history-actions">
+            <button class="btn ghost" id="historyRequeue" type="button">全部加入排隊</button>
+            <button class="btn ghost" id="historyDownload" type="button">下載成表格</button>
+          </div>
+          <ol id="historyList" class="queue history"></ol>
+          <button class="btn ghost wide" id="historyDelete" type="button">刪除這個歌單</button>
+        </div>
+      </section>
     </aside>
 
     <section class="stage" id="stage">

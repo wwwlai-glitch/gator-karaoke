@@ -1326,10 +1326,12 @@ $('#queueForm').addEventListener('submit', (e) => {
   if (!singer) { $('#singer').focus(); return; }
   if (!state.track) { setWarn('請先載入一首歌，再加入排隊。'); return; }
   const { syncedLyrics, plainLyrics, ...song } = state.track;
-  queue.push({
+  const item = {
     singer, song, trackId: state.track.id, track: state.track.trackName, artist: state.track.artistName,
     yt: media.kind === 'yt' ? ytVideoId : null, inst: mediaState.inst ? mediaState.inst.id : null, instOn,
-  });
+  };
+  queue.push(item);
+  recordRequest(item);
   $('#singer').value = '';
   saveQueue();
 });
@@ -1369,7 +1371,7 @@ if (typeof PartyHost !== 'undefined') {
     store,
     getQueue: () => queue,
     getNow: () => nowPlaying,
-    add(item) { queue.push(item); saveQueue(); return queue.length; },
+    add(item) { queue.push(item); saveQueue(); recordRequest(item); return queue.length; },
   });
 }
 
@@ -1440,3 +1442,105 @@ setInterval(() => {
     }
   }, 1000) };
 }, 500);
+
+/* ---------- song history: every request is kept in a playlist named by date ---------- */
+const HISTORY_KEY = 'gkc.history';
+const DAY_STARTS_AT = 6; // songs requested before 6am belong to the previous night
+const pad2 = (n) => String(n).padStart(2, '0');
+function partyDate(at = Date.now()) {
+  const d = new Date(at - DAY_STARTS_AT * 3600e3);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+const dateLabel = (key) => key.replace(/-/g, '/');
+const loadHistory = () => { const h = store.get(HISTORY_KEY, {}); return h && typeof h === 'object' ? h : {}; };
+let historyView = null;
+let historyDeleteArmed = null;
+
+function recordRequest(item) {
+  const h = loadHistory();
+  const key = partyDate();
+  const { fromPhone, ...entry } = item;
+  (h[key] = h[key] || []).push({ ...entry, fromPhone: !!fromPhone, at: Date.now() });
+  store.set(HISTORY_KEY, h);
+  historyView = key;
+  renderHistory();
+}
+
+function requeue(entries) {
+  entries.forEach(({ at, ...e }) => queue.push({ ...e }));
+  saveQueue();
+}
+
+function renderHistory() {
+  const h = loadHistory();
+  const keys = Object.keys(h).filter((k) => Array.isArray(h[k]) && h[k].length).sort().reverse();
+  const sel = $('#historyDate');
+  const box = $('#historyBox');
+  box.hidden = !keys.length;
+  $('#historyEmpty').hidden = !!keys.length;
+  if (!keys.length) return;
+  if (!historyView || !keys.includes(historyView)) historyView = keys[0];
+  sel.replaceChildren(...keys.map((k) => {
+    const o = el('option', '', `${dateLabel(k)} 的歌單（${h[k].length} 首）${k === partyDate() ? '· 今天' : ''}`);
+    o.value = k;
+    o.selected = k === historyView;
+    return o;
+  }));
+  const list = h[historyView];
+  $('#historyList').replaceChildren(...list.map((e) => {
+    const li = el('li');
+    const t = new Date(e.at);
+    const mid = el('div');
+    mid.append(el('div', 'q-name', e.track), el('div', 'q-song', `${e.singer} · ${e.artist || ''} · ${pad2(t.getHours())}:${pad2(t.getMinutes())}`));
+    const b = el('button', 'btn ghost mini-btn', '再點一次');
+    b.type = 'button';
+    b.addEventListener('click', () => { requeue([e]); setWarn(`已把「${e.track}」加入排隊。`); });
+    li.append(mid, b);
+    return li;
+  }));
+  historyDeleteArmed = null;
+  $('#historyDelete').textContent = '刪除這個歌單';
+}
+
+function downloadHistory() {
+  const list = loadHistory()[historyView] || [];
+  const cell = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const rows = [['順序', '時間', '點歌的人', '歌名', '歌手', 'YouTube 影片', '用伴奏'].map(cell).join(',')];
+  list.forEach((e, i) => {
+    const t = new Date(e.at);
+    rows.push([i + 1, `${pad2(t.getHours())}:${pad2(t.getMinutes())}`, e.singer, e.track, e.artist,
+      e.yt ? `https://www.youtube.com/watch?v=${e.yt}` : '', e.instOn ? '是' : '否'].map(cell).join(','));
+  });
+  // A byte-order mark lets Excel open the Chinese text correctly.
+  const blob = new Blob(['\ufeff' + rows.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = el('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `鱷魚KTV歌單-${historyView}.csv`;
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+$('#historyDate').addEventListener('change', (e) => { historyView = e.target.value; renderHistory(); });
+$('#historyRequeue').addEventListener('click', () => {
+  const list = loadHistory()[historyView] || [];
+  if (!list.length) return;
+  requeue(list);
+  setWarn(`已把 ${dateLabel(historyView)} 的 ${list.length} 首歌加入排隊。`);
+});
+$('#historyDownload').addEventListener('click', downloadHistory);
+$('#historyDelete').addEventListener('click', () => {
+  // Two presses instead of a confirm dialog, which would freeze the stage.
+  if (historyDeleteArmed !== historyView) {
+    historyDeleteArmed = historyView;
+    $('#historyDelete').textContent = '再按一次確認刪除';
+    return;
+  }
+  const h = loadHistory();
+  delete h[historyView];
+  store.set(HISTORY_KEY, h);
+  historyView = null;
+  renderHistory();
+});
+renderHistory();
