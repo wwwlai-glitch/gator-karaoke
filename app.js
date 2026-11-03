@@ -1369,3 +1369,49 @@ $$('#lyricMode button').forEach((b) => b.addEventListener('click', () => {
   applyLyricMode();
 }));
 applyLyricMode();
+
+/* ---------- auto-advance: when a song ends, the next singer starts on their own ---------- */
+const AUTO_DELAY = 5;
+let autoCountdown = null;
+const autoToggle = $('#autoNext');
+autoToggle.checked = store.get('gkc.autoNext', true);
+autoToggle.addEventListener('change', () => { store.set('gkc.autoNext', autoToggle.checked); if (!autoToggle.checked) cancelAuto(); });
+
+function stageIdle() {
+  if (!state.track) return true;
+  const d = media.duration();
+  return d > 0 && !media.playing() && media.time() >= d - 1;
+}
+function cancelAuto() {
+  if (!autoCountdown) return;
+  clearInterval(autoCountdown.timer);
+  autoCountdown = null;
+  setWarn('');
+}
+async function playWhenReady() {
+  // The video and backing track are found in the background; start once one is cued.
+  for (let i = 0; i < 60; i++) {
+    await new Promise((r) => setTimeout(r, 500));
+    if (media.playing()) return;
+    if (!mediaState.searching && media.kind === 'yt' && ytVideoId) media.play();
+  }
+}
+setInterval(() => {
+  if (autoCountdown) {
+    // Someone pressed play, seeked back or emptied the queue: stop counting down.
+    if (!queue.length || !stageIdle() || !autoToggle.checked) cancelAuto();
+    return;
+  }
+  if (!autoToggle.checked || !queue.length || !stageIdle()) return;
+  const q = queue[0];
+  let left = AUTO_DELAY;
+  const show = () => setWarn(`${left} 秒後換下一位：${q.singer} · ${q.track}`);
+  show();
+  autoCountdown = { timer: setInterval(async () => {
+    left -= 1;
+    if (left > 0) { show(); return; }
+    cancelAuto();
+    await nextSinger();
+    playWhenReady();
+  }, 1000) };
+}, 500);
