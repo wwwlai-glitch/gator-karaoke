@@ -54,7 +54,7 @@ const MediaFinder = (() => {
   const ALTERED = ['cover', 'reaction', 'live', 'remix', 'slowed', 'sped', 'nightcore', '8d', 'tutorial', 'lesson',
     'reverb', 'bass boosted', 'hour', 'hours', 'loop', 'mashup', 'parody', 'acoustic', 'teaser', 'trailer', 'snippet',
     'shorts', 'fan made', 'fanmade', 'ai', 'zumba', 'dance', 'choreography', 'workout', 'fitness', 'tiktok', 'extended',
-    '翻唱', '抖音', '加速', '降速', '慢速', '教學', '教学', '舞蹈', '混音'];
+    '翻唱', '抖音', '加速', '降速', '慢速', '教學', '教学', '舞蹈', '混音', '演唱會', '演唱会', '現場', '现场'];
   const INSTRUMENTAL = ['instrumental', 'karaoke', 'backing track', 'minus one', 'off vocal', 'no vocals', 'without vocals',
     'ktv', '伴奏', '伴唱', '卡拉ok', '消音', '去人聲', '去人声', '純音樂', '纯音乐', '無人聲', '无人声'];
   // Chinese lyric-video labels: 歌詞版, 動態歌詞, 字幕 and their simplified forms.

@@ -460,6 +460,15 @@ function applyYtMode() {
   stageVisualizer.setEnabled(ytMode === 'viz');
 }
 
+// Two-line KTV layout: only the line being sung and the next one, over the full video.
+let lyricMode = store.get('gkc.lyricMode', 'two');
+if (!['two', 'scroll'].includes(lyricMode)) lyricMode = 'two';
+function applyLyricMode() {
+  $('#stage').classList.toggle('two-line', lyricMode === 'two');
+  $$('#lyricMode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === lyricMode)));
+  state.focus = -2;
+}
+
 function cleanTitle(t) {
   return t
     .replace(/[([{【][^)\]}】]*(official|video|audio|lyric|lyrics|visuali[sz]er|hd|hq|4k|remaster(ed)?|mv|m\/v|live|explicit|clean)[^)\]}】]*[)\]}】]/gi, ' ')
@@ -791,6 +800,7 @@ function findActive(t) {
 function centerOn(idx) {
   const L = state.lines[idx] || state.lines[0];
   if (!L) return;
+  if (lyricMode === 'two') { lyricsEl.style.transform = 'translateY(0)'; return 0; }
   const y = viewport.clientHeight * 0.45 - (L.el.offsetTop + L.el.offsetHeight / 2);
   lyricsEl.style.transform = `translateY(${y}px)`;
   return y;
@@ -818,6 +828,7 @@ function frame() {
         L.el.classList.toggle('sung', i < a || (i === a && !inGap));
         L.el.classList.toggle('focus', i === focus);
         L.el.classList.toggle('near', Math.abs(i - focus) === 1);
+        L.el.classList.toggle('next', i === focus + 1);
       });
       if (prevActive >= 0 && lines[prevActive] && prevActive !== a) clearWords(lines[prevActive]);
       centerOn(focus);
@@ -842,7 +853,7 @@ function frame() {
     const remaining = up ? up.start - t : 0;
     if (up && !up.gap && focus > a && up.start - gapStart >= 3.5 && remaining > 0 && remaining <= 4) {
       countdown.hidden = false;
-      countdown.style.top = `${up.el.offsetTop + lyricsY() - 30}px`;
+      countdown.style.top = `${up.el.offsetTop + lyricsEl.offsetTop + lyricsY() - 30}px`;
       const lit = Math.ceil(remaining - 1);
       [...countdown.children].forEach((d, i) => d.classList.toggle('out', i >= lit));
     } else countdown.hidden = true;
@@ -1350,3 +1361,11 @@ if (typeof PartyHost !== 'undefined') {
     add(item) { queue.push(item); saveQueue(); return queue.length; },
   });
 }
+
+/* ---------- lyric layout ---------- */
+$$('#lyricMode button').forEach((b) => b.addEventListener('click', () => {
+  lyricMode = b.dataset.mode;
+  store.set('gkc.lyricMode', lyricMode);
+  applyLyricMode();
+}));
+applyLyricMode();
